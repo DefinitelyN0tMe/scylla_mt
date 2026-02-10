@@ -293,6 +293,78 @@ Before applying new migrations, scylla-migrate verifies that previously applied 
 6. **Use `--dry-run`** to preview changes before applying.
 7. **Set `NetworkTopologyStrategy`** for production metadata keyspace replication.
 
+## Production Safety
+
+This section covers important operational concerns for running scylla-migrate in production environments.
+
+### Metadata Keyspace Replication
+
+By default, scylla-migrate creates its metadata keyspace (`scylla_migrate`) with `SimpleStrategy` and `replication_factor: 1`. **This is intended for development only.**
+
+In production, you **must** configure `NetworkTopologyStrategy` with an appropriate replication factor for your cluster topology:
+
+```yaml
+metadata_replication:
+  class: "NetworkTopologyStrategy"
+  datacenters:
+    dc1: 3
+    dc2: 3
+```
+
+**Why this matters:**
+- With RF=1, losing a single node means losing migration metadata — the tool will not know which migrations have been applied.
+- LWT-based distributed locking requires a quorum, which is impossible with RF=1 if the replica node goes down.
+- If the metadata becomes unavailable, all future migrations will be blocked until the node is restored.
+
+> **Recommendation:** Set the replication factor to at least 3 per datacenter (or match your application keyspace's replication strategy).
+
+### Rollback Limitations
+
+Rollbacks in CQL/ScyllaDB are fundamentally different from SQL databases:
+
+- **DDL statements are not transactional.** If a rollback fails midway (e.g., network error after `DROP TABLE` but before `DROP INDEX`), the schema will be in a partially rolled-back state. You'll need to manually finish or fix it.
+- **Data loss is irreversible.** `DROP TABLE` permanently deletes all data in that table. There is no automatic backup before rollback — plan your own backup strategy.
+- **Undo scripts must be written manually.** scylla-migrate generates empty `U<version>__<description>.cql` files with `--with-undo`. It's your responsibility to write correct undo CQL.
+- **Undo migrations are not tracked in metadata.** When rollback executes undo statements, it removes the corresponding versioned migration record but does not create a new entry. This means rollbacks won't appear in `scylla-migrate status` history.
+
+> **Recommendation:** Always test rollback scripts in staging first. For critical production tables, take a snapshot (`nodetool snapshot`) before running rollbacks.
+
+### `IF EXISTS` / `IF NOT EXISTS` in Migrations
+
+Always use guard clauses in your CQL statements:
+
+```sql
+-- Good: safe for retries
+CREATE TABLE IF NOT EXISTS users (id UUID PRIMARY KEY, name TEXT);
+CREATE INDEX IF NOT EXISTS users_name_idx ON users (name);
+
+-- Dangerous: fails on retry if table already exists
+CREATE TABLE users (id UUID PRIMARY KEY, name TEXT);
+```
+
+**Why this matters:**
+- If a migration partially succeeds (e.g., the first statement runs, then a network timeout occurs before metadata is recorded), re-running `scylla-migrate migrate` will re-execute all statements in that migration.
+- Without `IF NOT EXISTS`, the retry will fail with `AlreadyExists` error, leaving you stuck.
+- Similarly, undo scripts should use `DROP TABLE IF EXISTS` and `DROP INDEX IF EXISTS`.
+
+> **Recommendation:** Treat every migration as potentially needing to be idempotent. Use `IF NOT EXISTS` for CREATE, `IF EXISTS` for DROP and ALTER operations.
+
+### Repeatable Migrations
+
+Repeatable migrations (`R__<description>.cql`) are re-applied whenever their content (checksum) changes. Be aware of the following:
+
+- **Repeatable migrations must be fully idempotent.** They will run multiple times over the lifecycle of your project. Every statement inside must be safe to execute repeatedly.
+- **They run after all versioned migrations.** On every `migrate` invocation, pending versioned migrations are applied first, then any repeatable migrations with changed checksums.
+- **There is no ordering guarantee between repeatable migrations.** If you have multiple `R__*.cql` files, don't assume they run in any particular order. Each should be self-contained.
+- **Checksums are validated only for versioned migrations.** Changes to repeatable migration files are expected — that's their purpose. The tool will re-apply them, not flag them as tampered.
+
+Common use cases for repeatable migrations:
+- Refreshing materialized views
+- Recreating custom functions or aggregates
+- Updating role permissions
+
+> **Recommendation:** Keep repeatable migrations small and focused. If the content of a repeatable migration grows complex, consider splitting it into independent files.
+
 ## Development
 
 ```bash
