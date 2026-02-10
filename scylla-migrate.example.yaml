@@ -1,0 +1,47 @@
+# ScyllaDB/Cassandra connection
+hosts:
+  - "localhost:9042"
+
+keyspace: "my_application"
+
+# Path to migration files
+migrations_dir: "./migrations"
+
+# Authentication (optional)
+# username: ""
+# password: ""
+
+# Consistency level: any, one, two, three, quorum, all, local_quorum, each_quorum, local_one
+consistency: "quorum"
+
+# Timeouts
+timeout: 30s
+connection_timeout: 10s
+lock_timeout: 60s
+schema_agreement_timeout: 30s
+
+# CQL protocol version (1-5)
+protocol_version: 4
+
+# Retry policy
+max_retries: 3
+
+# Metadata storage
+metadata_keyspace: "scylla_migrate"
+metadata_replication:
+  class: "SimpleStrategy"          # or "NetworkTopologyStrategy"
+  replication_factor: 1            # for SimpleStrategy
+  # datacenters:                   # for NetworkTopologyStrategy
+  #   dc1: 3
+  #   dc2: 3
+
+# SSL/TLS (optional)
+# ssl:
+#   enabled: false
+#   ca_cert: "/path/to/ca.crt"
+#   client_cert: "/path/to/client.crt"
+#   client_key: "/path/to/client.key"
+#   skip_verify: false
+
+# Logging level: debug, info, warn, error
+# Set via --log-level flag or SCYLLA_MIGRATE_LOG_LEVEL env var
