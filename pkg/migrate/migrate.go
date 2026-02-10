@@ -82,7 +82,11 @@ func (m *Migrator) Migrate() error {
 	if err := m.ctx.LockManager.Acquire(m.config.LockTimeout); err != nil {
 		return fmt.Errorf("failed to acquire lock: %w", err)
 	}
-	defer m.ctx.LockManager.Release()
+	defer func() {
+		if err := m.ctx.LockManager.Release(); err != nil {
+			m.logger.Warn().Err(err).Msg("Failed to release migration lock")
+		}
+	}()
 
 	scanned, err := migration.ScanMigrationsDir(m.config.MigrationsDir)
 	if err != nil {

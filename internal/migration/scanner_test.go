@@ -116,8 +116,8 @@ func TestGetNextVersion(t *testing.T) {
 	assert.Equal(t, 1, v)
 
 	// After creating some migrations
-	os.WriteFile(filepath.Join(dir, "V001__first.cql"), []byte("test"), 0644)
-	os.WriteFile(filepath.Join(dir, "V003__third.cql"), []byte("test"), 0644)
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "V001__first.cql"), []byte("test"), 0644))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "V003__third.cql"), []byte("test"), 0644))
 
 	v, err = GetNextVersion(dir)
 	require.NoError(t, err)

@@ -53,12 +53,12 @@ func init() {
 	rootCmd.PersistentFlags().String("password", "", "authentication password")
 	rootCmd.PersistentFlags().String("log-level", "info", "log level (debug, info, warn, error)")
 
-	viper.BindPFlag("hosts", rootCmd.PersistentFlags().Lookup("hosts"))
-	viper.BindPFlag("keyspace", rootCmd.PersistentFlags().Lookup("keyspace"))
-	viper.BindPFlag("migrations_dir", rootCmd.PersistentFlags().Lookup("migrations-dir"))
-	viper.BindPFlag("username", rootCmd.PersistentFlags().Lookup("username"))
-	viper.BindPFlag("password", rootCmd.PersistentFlags().Lookup("password"))
-	viper.BindPFlag("log_level", rootCmd.PersistentFlags().Lookup("log-level"))
+	_ = viper.BindPFlag("hosts", rootCmd.PersistentFlags().Lookup("hosts"))
+	_ = viper.BindPFlag("keyspace", rootCmd.PersistentFlags().Lookup("keyspace"))
+	_ = viper.BindPFlag("migrations_dir", rootCmd.PersistentFlags().Lookup("migrations-dir"))
+	_ = viper.BindPFlag("username", rootCmd.PersistentFlags().Lookup("username"))
+	_ = viper.BindPFlag("password", rootCmd.PersistentFlags().Lookup("password"))
+	_ = viper.BindPFlag("log_level", rootCmd.PersistentFlags().Lookup("log-level"))
 
 	rootCmd.SetVersionTemplate(fmt.Sprintf("scylla-migrate %s (commit: %s, built: %s)\n", version, commit, date))
 }
