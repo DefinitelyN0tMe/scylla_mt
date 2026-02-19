@@ -16,12 +16,8 @@ Like [Flyway](https://flywaydb.org/) — but for CQL.
 ### Go install
 
 ```bash
-go install github.com/scylla-migrate/scylla-migrate@latest
+go install github.com/DefinitelyN0tMe/scylla-migrate@latest
 ```
-
-### Binary download
-
-Download from [GitHub Releases](https://github.com/scylla-migrate/scylla-migrate/releases) for Linux, macOS, and Windows (amd64/arm64).
 
 ### Docker
 
@@ -32,7 +28,7 @@ docker run --rm -v $(pwd):/app -w /app ghcr.io/scylla-migrate/scylla-migrate mig
 ### From source
 
 ```bash
-git clone https://github.com/scylla-migrate/scylla-migrate.git
+git clone https://github.com/DefinitelyN0tMe/scylla-migrate.git
 cd scylla-migrate
 make build
 ```
