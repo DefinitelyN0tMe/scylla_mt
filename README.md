@@ -22,7 +22,7 @@ go install github.com/DefinitelyN0tMe/scylla-migrate@latest
 ### Docker
 
 ```bash
-docker run --rm -v $(pwd):/app -w /app ghcr.io/scylla-migrate/scylla-migrate migrate
+docker run --rm -v $(pwd):/app -w /app ghcr.io/DefinitelyN0tMe/scylla-migrate migrate
 ```
 
 ### From source
